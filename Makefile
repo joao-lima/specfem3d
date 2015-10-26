@@ -14,4 +14,4 @@ specfem3D-serial: specfem3D_single_precision_with_Deville.c
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 clean:
-	rm -rf *.o specfem3D_seq specfem3D_omp *~
+	rm -rf *.o *~ specfem3D-serial specfem3D-omp-task-deps
