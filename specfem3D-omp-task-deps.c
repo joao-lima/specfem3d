@@ -45,7 +45,7 @@
 //
 
 //#define CONFIG_VERBOSE	1
-#define CONFIG_BENCHMARK	1
+//#define CONFIG_BENCHMARK	1
 
 #include <stdio.h>
 #include <math.h>
