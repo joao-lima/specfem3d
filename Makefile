@@ -17,5 +17,11 @@ specfem3D-omp-for: specfem3D-omp-for.c
 specfem3D-serial: specfem3D_single_precision_with_Deville.c
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
+specfem3D-profiler: specfem3D_single_precision_with_Deville.c
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+
 clean:
 	rm -rf *.o *~ specfem3D-serial specfem3D-omp-task-deps
+
+.PHONY: specfem3D-omp-task-deps specfem3D-omp-for specfem3D-serial specfem3D-profiler
+

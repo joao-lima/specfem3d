@@ -557,7 +557,7 @@ int main(int argc, char *argv[])
                                      uz.dummyz_loc_2D_5_25[4][i]*hprime_xxT[j][4];
     }
   }
-
+   
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
