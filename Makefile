@@ -6,7 +6,7 @@ CFLAGS += -DCONFIG_VERBOSE
 CC = gcc
 LDFLAGS = -lm
 
-all: specfem3D-serial specfem3D-omp-task-deps specfem3D-omp-for
+all: specfem3D-serial specfem3D-omp-task-deps specfem3D-omp-for specfem3D-omp-for-static
 
 specfem3D-omp-task-deps: specfem3D-omp-task-deps.c kernels.c
 	$(CC) $(CFLAGS) -fopenmp $^ -o $@ $(LDFLAGS)
@@ -20,8 +20,11 @@ specfem3D-serial: specfem3D_single_precision_with_Deville.c
 specfem3D-profiler: specfem3D_single_precision_with_Deville.c
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-clean:
-	rm -rf *.o *~ specfem3D-serial specfem3D-omp-task-deps
+specfem3D-omp-for-static: specfem3D-omp-for-static.c
+	$(CC) $(CFLAGS) -fopenmp $^ -o $@ $(LDFLAGS)
 
-.PHONY: specfem3D-omp-task-deps specfem3D-omp-for specfem3D-serial specfem3D-profiler
+clean:
+	rm -rf *.o *~ specfem3D-serial specfem3D-omp-task-deps specfem3D-omp-for specfem3D-omp-for-static
+
+.PHONY: specfem3D-omp-task-deps specfem3D-omp-for specfem3D-serial specfem3D-profiler specfem3D-omp-for-static
 
