@@ -635,7 +635,7 @@ main (int argc, char *argv[])
 // need to ensure ALL displ has been produced.
 // Limitation of current dependence detection mechanism.
 // this is waiting for displ[] to be entirely filled because we use it in the gather below.
-#pragma omp taskwait
+//#pragma omp taskwait
 //This barrier is need because the data is accessed with a different association
 	for (ispec = 0; ispec < NSPEC; ispec += BS_NSPEC) {
 	    actual_size = ((NSPEC - ispec) >= BS_NSPEC ? BS_NSPEC : (NSPEC - ispec));
