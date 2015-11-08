@@ -709,7 +709,7 @@ main (int argc, char *argv[])
 
 // save the seismogram at the end of the run0
   char filename[50];
-  sprintf (filename, "seismogram_OMP_%d.txt", getpid ());
+  sprintf (filename, "seismogram_omp_task_deps_%d.txt", getpid ());
   if ((IIN = fopen (filename, "w")) == NULL)
     {
       fprintf (stderr, "Cannot open file %s, exiting...\n", filename);

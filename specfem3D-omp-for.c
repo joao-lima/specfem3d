@@ -770,7 +770,9 @@ int main(int argc, char *argv[])
 
 
 // save the seismogram at the end of the run
- if((IIN = fopen("seismogram_C_single.txt","w")) == NULL) {
+  char filename[50];
+  sprintf (filename, "seismogram_omp_for_%d.txt", getpid ());
+ if((IIN = fopen(filename,"w")) == NULL) {
          fprintf(stderr,"Cannot create file seismogram_C_single.txt, exiting...\n");
          exit(1);
        }
