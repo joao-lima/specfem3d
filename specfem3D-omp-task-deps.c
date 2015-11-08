@@ -587,11 +587,9 @@ main (int argc, char *argv[])
 #endif
   t_start = usecs ();
 
-#if defined(_OPENMP)
 #pragma omp parallel
 #pragma omp single
   {
-#endif
 // start of the time loop (which must remain serial obviously)
     for (it = 1; it <= NSTEP; it++) {
 // compute maximum of norm of displacement from time to time and display it
@@ -601,15 +599,11 @@ main (int argc, char *argv[])
 	    Usolidnorm = -1.f;
 	    for (i = 0; i < NGLOB; i += BS_NGLOB) {
 		actual_size = ((NGLOB - i) >= BS_NGLOB ? BS_NGLOB : (NGLOB - i));
-#if defined(_OPENMP)
 #pragma omp task firstprivate(actual_size, i, bs_nglob, dim) depend(inout: Usolidnorm) depend(in: displ[0:bs_nglob][0:dim])
-#endif
 		compute_max (actual_size, (void *) &displ[i][0], &Usolidnorm);
 	      }
 //#pragma css wait on (&Usolidnorm)
-#if defined(_OPENMP)
 #pragma omp taskwait
-#endif
 #if defined(CONFIG_VERBOSE)
 	    printf ("Time step # %d out of %d\n", it, NSTEP);
 	    printf ("Max norm displacement vector U in the solid (m) = %.8g\n\n", Usolidnorm);
@@ -625,9 +619,7 @@ main (int argc, char *argv[])
 // the displacement and velocity vectors and clear the acceleration vector
 	for (i = 0; i < NGLOB; i += BS_NGLOB) {
 	    actual_size = ((NGLOB - i) >= BS_NGLOB ? BS_NGLOB : (NGLOB - i));
-#if defined(_OPENMP)
 #pragma omp task firstprivate(actual_size, i, bs_nglob, dim) depend(inout: displ[0:bs_nglob][0:dim], veloc[0:bs_nglob][0:dim], accel[0:bs_nglob][0:dim])
-#endif
 	    update_disp_vel (actual_size, (void *) &displ[i][0], (void *) &veloc[i][0], (void *) &accel[i][0]);
 	  }
 
@@ -641,20 +633,14 @@ main (int argc, char *argv[])
 // need to ensure ALL displ has been produced.
 // Limitation of current dependence detection mechanism.
 // this is waiting for displ[] to be entirely filled because we use it in the gather below.
-#if defined(_OPENMP)
 #pragma omp taskwait
-#endif
 //This barrier is need because the data is accessed with a different association
 	for (ispec = 0; ispec < NSPEC; ispec += BS_NSPEC) {
 	    actual_size = ((NSPEC - ispec) >= BS_NSPEC ? BS_NSPEC : (NSPEC - ispec));
-#if defined(_OPENMP)
 #pragma omp task firstprivate(actual_size, ispec, bs_nspec, dim) depend(out: dummy_loc[0:actual_size][:dim_z][:dim_y][:dim_x]) depend(in: displ[0:bs_nspec][0:dim], ibool[0:actual_size][:dim_z][:dim_y][:dim_x])
-#endif
 	    gather (actual_size, displ, (void *) &ibool[ispec][0][0][0], dummy_loc[ispec / BS_NSPEC]);
 
-#if defined(_OPENMP)
 #pragma omp task firstprivate(actual_size, ispec, bs_nspec, dim) depend(in: dummy_loc[:actual_size][:dim_z][:dim_y][:dim_x][:dim], all_matrices[:dim+4][:dim_x][:dim_x], jacobian_matrix[:actual_size][:dim_z][:dim_y][:dim_x][:dim*dim], kappa_and_mu[:actual_size][:dim_z][:dim_y][:dim_x][:2]) depend(out: sum_terms[:actual_size][:dim_z][:dim_y][:dim_x][:dim])
-#endif
 	    process_element (actual_size, dummy_loc[ispec / BS_NSPEC],
 #ifdef USE_DEVILLE_INLINED_PRODUCTS
 			     all_matrices,
@@ -666,16 +652,12 @@ main (int argc, char *argv[])
 			     sum_terms[ispec / BS_NSPEC]);
 
 // sum contributions from each element to the global mesh using indirect addressing
-#if defined(_OPENMP)
 #pragma omp task firstprivate(actual_size, ispec, bs_nspec, dim) depend(inout: accel[:nglob][:dim]) depend(in: ibool[:actual_size][:dim_z][:dim_y][:dim_x], sum_terms[:actual_size][:dim_z][:dim_y][:dim_x][:dim])
-#endif
 	    scatter (actual_size, (void *) &ibool[ispec][0][0][0], sum_terms[ispec / BS_NSPEC], accel);
 
 	  } // end of main loop on all the elements
 
-#if defined(_OPENMP)
 #pragma omp taskwait
-#endif
 
 // add the earthquake source at a given grid point
 // this is negligible and is intrinsically serial because it is done by only
@@ -695,25 +677,19 @@ main (int argc, char *argv[])
 // the acceleration and velocity vectors
 	for (i = 0; i < NGLOB; i += BS_NGLOB) {
 	    actual_size = ((NGLOB - i) >= BS_NGLOB ? BS_NGLOB : (NGLOB - i));
-#if defined(_OPENMP)
 #pragma omp task firstprivate(actual_size, i, bs_nglob, dim) depend(inout: accel[:actual_size][:dim], veloc[:actual_size][:dim]) depend(in: rmass_inverse[:actual_size])
-#endif
 	    update_acc_vel (actual_size, (void *) &accel[i][0], (void *) &veloc[i][0],
 			    (void *) &rmass_inverse[i]);
 	  }
 
-#if defined(_OPENMP)
 #pragma omp taskwait
-#endif
 // record a seismogram to check that the simulation went well
 // we subtract one to the element number of the receiver because arrays start at 0 in C
 	seismogram[it - 1] = displ[ibool[NSPEC_STATION - 1][1][1][1]][Z];
 
       }				// end of the serial time loop
-#if defined(_OPENMP)
 #pragma omp taskwait
   }				// end omp parallel
-#endif
   t_end = usecs ();
 
 #if defined(CONFIG_BENCHMARK)
