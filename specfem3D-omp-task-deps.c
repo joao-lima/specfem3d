@@ -551,6 +551,7 @@ main (int argc, char *argv[])
 
 // DK DK store all the matrices in one array in order to reduce the number of arguments sent to the tasks
 #ifdef USE_DEVILLE_INLINED_PRODUCTS
+#pragma omp parallel for
   for (j = 0; j < NGLLY; j++)
     {
       for (i = 0; i < NGLLX; i++)
@@ -576,6 +577,7 @@ main (int argc, char *argv[])
 // clear initial vectors before starting the time loop
 // it is not really crucial to parallelize this task because it is done only once
 // before entering the time loop therefore it could remain serial
+#pragma omp parallel for
   for (i = 0; i < NGLOB; i += BS_NGLOB)
     {
       actual_size = ((NGLOB - i) >= BS_NGLOB ? BS_NGLOB : (NGLOB - i));
