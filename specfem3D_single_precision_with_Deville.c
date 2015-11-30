@@ -308,8 +308,23 @@ int main(int argc, char *argv[])
           exit(1);
         }
 #endif
-//// DK DK 33333333333333 now in Fortran
-// read_arrays_solver_(xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,kappav,muv,ibool,rmass_inverse,&myrank,xstore,ystore,zstore);
+
+// read the derivation matrices from external file
+#if 0
+ printf("reading file DATABASES_FOR_SOLVER/matrices.dat\n");
+ if((IIN=fopen("DATABASES_FOR_SOLVER/matrices.dat","r"))==NULL) {
+         fprintf(stderr,"Cannot open file DATABASES_FOR_SOLVER/matrices.dat, exiting...\n");
+         exit(1);
+       }
+#else
+#if defined(CONFIG_VERBOSE)
+ printf("reading file ./DB/matrices.dat\n");
+#endif
+   if((IIN=fopen("./DB/matrices.dat","r"))==NULL) {
+         fprintf(stderr,"Cannot open file DATABASES_FOR_SOLVER/matrices.dat, exiting...\n");
+         exit(1);
+       }
+#endif
 
  for (ispec=0;ispec<NSPEC;ispec++) {
    for (k=0;k<NGLLZ;k++) {
@@ -345,6 +360,10 @@ int main(int argc, char *argv[])
  }
  fclose(IIN);
 
+ //// DK DK 33333333333333 now in Fortran
+ // read_arrays_solver_(xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,kappav,muv,ibool,rmass_inverse,&myrank,xstore,ystore,zstore);
+
+
 // read the derivation matrices from external file
 #if 0
  printf("reading file DATABASES_FOR_SOLVER/matrices.dat\n");
@@ -370,7 +389,7 @@ int main(int argc, char *argv[])
 // compute the transpose matrices
      hprime_xxT[i][j] = hprime_xx[j][i];
      hprimewgll_xxT[i][j] = hprimewgll_xx[j][i];
-
+     printf ("Pos_mat:%d\n",i*5+j);
      fscanf(IIN, "%e\n", &wgllwgll_yz[j][i]);
      fscanf(IIN, "%e\n", &wgllwgll_xz[j][i]);
      fscanf(IIN, "%e\n", &wgllwgll_xy[j][i]);
@@ -484,12 +503,15 @@ int main(int argc, char *argv[])
      }
    }
 
+
 // big loop over all the elements in the mesh to compute the elemental contribution
 // to the acceleration vector of each element of the finite-element mesh
 
 // subroutines adapted from Deville, Fischer and Mund, High-order methods
 // for incompressible fluid flow, Cambridge University Press (2002),
 // pages 386 and 389 and Figure 8.3.1
+
+
   for (j=0;j<NGLL2;j++) {
     for (i=0;i<NGLLX;i++) {
       utempx1.tempx1_2D_25_5[j][i] = hprime_xx[0][i]*ux.dummyx_loc_2D_25_5[j][0] +
@@ -511,6 +533,8 @@ int main(int argc, char *argv[])
                                      hprime_xx[4][i]*uz.dummyz_loc_2D_25_5[j][4];
     }
   }
+
+
 
   for (k=0;k<NGLLZ;k++) {
     for (j=0;j<NGLLX;j++) {
@@ -535,6 +559,14 @@ int main(int argc, char *argv[])
       }
     }
   }
+  /*
+ for (k=0; k < NGLLZ; k++)
+  for (j=0; j < NGLLY; j++){
+    for (i=0; i< NGLLX; i++){
+        printf ("x%d y%d z%d : %f %f %f\n", k,j,i,tempx2[k][j][i], tempy2[k][j][i], tempz2[k][j][i]);
+    }
+  }
+  */
 
   for (j=0;j<NGLLX;j++) {
     for (i=0;i<NGLL2;i++) {
@@ -567,10 +599,10 @@ int main(int argc, char *argv[])
          xiyl = xiy[ispec][k][j][i];
          xizl = xiz[ispec][k][j][i];
          etaxl = etax[ispec][k][j][i];
-         etayl = etay[ispec][k][j][i];
          etazl = etaz[ispec][k][j][i];
          gammaxl = gammax[ispec][k][j][i];
          gammayl = gammay[ispec][k][j][i];
+         etayl = etay[ispec][k][j][i];
          gammazl = gammaz[ispec][k][j][i];
          jacobianl = 1.f / (xixl*(etayl*gammazl-etazl*gammayl)-xiyl*(etaxl*gammazl-etazl*gammaxl)+xizl*(etaxl*gammayl-etayl*gammaxl));
 
@@ -739,14 +771,14 @@ int main(int argc, char *argv[])
 
  } // end of the serial time loop
   t_end = usecs ();
- 
+
 #if defined(CONFIG_BENCHMARK)
 #if defined(_OPENMP)
   /* threads NSPEC NGLOB time */
-  fprintf(stdout, "specfem3d;omp;%d;%d;%d;%d;%d;%d;%f;%.6f\n", omp_get_max_threads(), NSPEC, NGLOB, BS_NSPEC, BS_NGLOB, NSTEP, deltat, 
+  fprintf(stdout, "specfem3d;omp;%d;%d;%d;%d;%d;%d;%f;%.6f\n", omp_get_max_threads(), NSPEC, NGLOB, BS_NSPEC, BS_NGLOB, NSTEP, deltat,
   	 (float) (t_end - t_start) / 1000000.f);
 #else /* _OPENMP */
-  fprintf(stdout, "specfem3d;serial;%d;%d;%d;%d;%d;%d;%f;%.6f\n", 1, NSPEC, NGLOB, 1, 1, NSTEP, deltat, 
+  fprintf(stdout, "specfem3d;serial;%d;%d;%d;%d;%d;%d;%f;%.6f\n", 1, NSPEC, NGLOB, 1, 1, NSTEP, deltat,
   	 (float) (t_end - t_start) / 1000000.f);
 #endif
 #else /* CONFIG_BENCHMARK */

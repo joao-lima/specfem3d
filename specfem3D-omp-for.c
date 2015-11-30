@@ -145,10 +145,10 @@ int main(int argc, char *argv[])
     double zstore[NSPEC][NGLLZ][NGLLY][NGLLX];
 
  static union ux_tag {
-   float dummyx_loc[NGLLZ][NGLLY][NGLLX];
-   float dummyx_loc_2D_25_5[NGLL2][NGLLX];
-   float dummyx_loc_2D_5_25[NGLLX][NGLL2];
- } ux;
+   float dummyx_loc;
+   float dummyx_loc_2D_25_5;
+   float dummyx_loc_2D_5_25;
+ } ux[125];
 
  static union uy_tag {
    float dummyy_loc[NGLLZ][NGLLY][NGLLX];
@@ -408,7 +408,6 @@ int main(int argc, char *argv[])
 // in order to monitor the simulation
 // this can remain serial because it is done only every NTSTEP_BETWEEN_OUTPUT_INFO time steps
    if((it % NTSTEP_BETWEEN_OUTPUT_INFO) == 0 || it == 5 || it == NSTEP) {
-
      Usolidnorm = -1.f;
 
      for (iglob = 0; iglob < NGLOB; iglob++) {
@@ -471,32 +470,32 @@ int main(int argc, char *argv[])
 // using indirect addressing (contained in array ibool)
 // and then to compute the elemental contribution
 // to the acceleration vector of each element of the finite-element mesh
+int iter=0;
+
  for (ispec=0;ispec<NSPEC;ispec++) {
 
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
            iglob = ibool[ispec][k][j][i];
-           ux.dummyx_loc[k][j][i] = displx[iglob];
+           ux[k*25+j*5+i].dummyx_loc = displx[iglob];
            uy.dummyy_loc[k][j][i] = disply[iglob];
            uz.dummyz_loc[k][j][i] = displz[iglob];
        }
      }
    }
 
-// big loop over all the elements in the mesh to compute the elemental contribution
-// to the acceleration vector of each element of the finite-element mesh
+   //printf ("passou daqui:%d\n",iter);
+   //iter++;
 
-// subroutines adapted from Deville, Fischer and Mund, High-order methods
-// for incompressible fluid flow, Cambridge University Press (2002),
-// pages 386 and 389 and Figure 8.3.1
+
   for (j=0;j<NGLL2;j++) {
     for (i=0;i<NGLLX;i++) {
-      utempx1.tempx1_2D_25_5[j][i] = hprime_xx[0][i]*ux.dummyx_loc_2D_25_5[j][0] +
-                                     hprime_xx[1][i]*ux.dummyx_loc_2D_25_5[j][1] +
-                                     hprime_xx[2][i]*ux.dummyx_loc_2D_25_5[j][2] +
-                                     hprime_xx[3][i]*ux.dummyx_loc_2D_25_5[j][3] +
-                                     hprime_xx[4][i]*ux.dummyx_loc_2D_25_5[j][4];
+      utempx1.tempx1_2D_25_5[j][i] = hprime_xx[0][i]*ux[j*5 + 0].dummyx_loc_2D_25_5 +
+                                     hprime_xx[1][i]*ux[j*5 + 1].dummyx_loc_2D_25_5 +
+                                     hprime_xx[2][i]*ux[j*5 + 2].dummyx_loc_2D_25_5 +
+                                     hprime_xx[3][i]*ux[j*5 + 3].dummyx_loc_2D_25_5 +
+                                     hprime_xx[4][i]*ux[j*5 + 4].dummyx_loc_2D_25_5;
 
       utempy1.tempy1_2D_25_5[j][i] = hprime_xx[0][i]*uy.dummyy_loc_2D_25_5[j][0] +
                                      hprime_xx[1][i]*uy.dummyy_loc_2D_25_5[j][1] +
@@ -515,11 +514,11 @@ int main(int argc, char *argv[])
   for (k=0;k<NGLLZ;k++) {
     for (j=0;j<NGLLX;j++) {
       for (i=0;i<NGLLX;i++) {
-        tempx2[k][j][i] = ux.dummyx_loc[k][0][i]*hprime_xxT[j][0] +
-                          ux.dummyx_loc[k][1][i]*hprime_xxT[j][1] +
-                          ux.dummyx_loc[k][2][i]*hprime_xxT[j][2] +
-                          ux.dummyx_loc[k][3][i]*hprime_xxT[j][3] +
-                          ux.dummyx_loc[k][4][i]*hprime_xxT[j][4];
+        tempx2[k][j][i] = ux[k*25 + i].dummyx_loc*hprime_xxT[j][0] +
+                          ux[k*25 + 5 + i].dummyx_loc*hprime_xxT[j][1] +
+                          ux[k*25 + 10 + i].dummyx_loc*hprime_xxT[j][2] +
+                          ux[k*25 + 15 + i].dummyx_loc*hprime_xxT[j][3] +
+                          ux[k*25 + 20 +  i].dummyx_loc*hprime_xxT[j][4];
 
         tempy2[k][j][i] = uy.dummyy_loc[k][0][i]*hprime_xxT[j][0] +
                           uy.dummyy_loc[k][1][i]*hprime_xxT[j][1] +
@@ -538,11 +537,11 @@ int main(int argc, char *argv[])
 
   for (j=0;j<NGLLX;j++) {
     for (i=0;i<NGLL2;i++) {
-      utempx3.tempx3_2D_5_25[j][i] = ux.dummyx_loc_2D_5_25[0][i]*hprime_xxT[j][0] +
-                                     ux.dummyx_loc_2D_5_25[1][i]*hprime_xxT[j][1] +
-                                     ux.dummyx_loc_2D_5_25[2][i]*hprime_xxT[j][2] +
-                                     ux.dummyx_loc_2D_5_25[3][i]*hprime_xxT[j][3] +
-                                     ux.dummyx_loc_2D_5_25[4][i]*hprime_xxT[j][4];
+      utempx3.tempx3_2D_5_25[j][i] = ux[i*25].dummyx_loc_2D_5_25*hprime_xxT[j][0] +
+                                     ux[1+i*25].dummyx_loc_2D_5_25*hprime_xxT[j][1] +
+                                     ux[2+i*25].dummyx_loc_2D_5_25*hprime_xxT[j][2] +
+                                     ux[3+i*25].dummyx_loc_2D_5_25*hprime_xxT[j][3] +
+                                     ux[4+i*25].dummyx_loc_2D_5_25*hprime_xxT[j][4];
 
       utempy3.tempy3_2D_5_25[j][i] = uy.dummyy_loc_2D_5_25[0][i]*hprime_xxT[j][0] +
                                      uy.dummyy_loc_2D_5_25[1][i]*hprime_xxT[j][1] +
@@ -739,14 +738,14 @@ int main(int argc, char *argv[])
 
  } // end of the serial time loop
   t_end = usecs ();
- 
+
 #if defined(CONFIG_BENCHMARK)
 #if defined(_OPENMP)
   /* threads NSPEC NGLOB time */
-  fprintf(stdout, "specfem3d;omp;%d;%d;%d;%d;%d;%d;%f;%.6f\n", omp_get_max_threads(), NSPEC, NGLOB, BS_NSPEC, BS_NGLOB, NSTEP, deltat, 
+  fprintf(stdout, "specfem3d;omp;%d;%d;%d;%d;%d;%d;%f;%.6f\n", omp_get_max_threads(), NSPEC, NGLOB, BS_NSPEC, BS_NGLOB, NSTEP, deltat,
   	 (float) (t_end - t_start) / 1000000.f);
 #else /* _OPENMP */
-  fprintf(stdout, "specfem3d;serial;%d;%d;%d;%d;%d;%d;%f;%.6f\n", 1, NSPEC, NGLOB, 1, 1, NSTEP, deltat, 
+  fprintf(stdout, "specfem3d;serial;%d;%d;%d;%d;%d;%d;%f;%.6f\n", 1, NSPEC, NGLOB, 1, 1, NSTEP, deltat,
   	 (float) (t_end - t_start) / 1000000.f);
 #endif
 #else /* CONFIG_BENCHMARK */
