@@ -49,6 +49,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
+#include <omp.h>
 
 //#define CONFIG_VERBOSE	1
 //#define CONFIG_BENCHMARK	1
@@ -251,8 +252,8 @@ int main(int argc, char *argv[])
  clock_t timeloop_begin;
  float timeloop_total;
 
- int ispec,iglob,i,j,k;
-
+ int ispec,iglob;
+ size_t i,j,k;
  float xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl;
  float duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl;
  float duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl;
@@ -261,6 +262,8 @@ int main(int argc, char *argv[])
  float lambdal,mul,lambdalplus2mul,kappal;
 
  float Usolidnorm,current_value,time,memory_size;
+
+ int num_threads = omp_get_max_threads();
 
 // to read external files
  FILE *IIN;
@@ -409,7 +412,6 @@ int main(int argc, char *argv[])
 // this can remain serial because it is done only every NTSTEP_BETWEEN_OUTPUT_INFO time steps
    if((it % NTSTEP_BETWEEN_OUTPUT_INFO) == 0 || it == 5 || it == NSTEP) {
      Usolidnorm = -1.f;
-
      for (iglob = 0; iglob < NGLOB; iglob++) {
        current_value = sqrtf(displx[iglob]*displx[iglob] + disply[iglob]*disply[iglob] + displz[iglob]*displz[iglob]);
        if(current_value > Usolidnorm) { Usolidnorm = current_value; }
@@ -447,6 +449,7 @@ int main(int argc, char *argv[])
 
 // big loop over all the global points (not elements) in the mesh to update
 // the displacement and velocity vectors and clear the acceleration vector
+
  for (i=0;i<NGLOB;i++) {
    displx[i] += deltat*velocx[i] + deltatsqover2*accelx[i];
    disply[i] += deltat*velocy[i] + deltatsqover2*accely[i];
@@ -473,7 +476,7 @@ int main(int argc, char *argv[])
 int iter=0;
 
  for (ispec=0;ispec<NSPEC;ispec++) {
-
+   //#pragma omp parallel for private(iglob) collapse(3)
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
@@ -489,6 +492,17 @@ int iter=0;
    //iter++;
 
 
+<<<<<<< HEAD
+=======
+// subroutines adapted from Deville, Fischer and Mund, High-order methods
+// for incompressible fluid flow, Cambridge University Press (2002),
+// pages 386 and 389 and Figure 8.3.1
+  
+ //Os três laços a seguir aumentaram ainda mais o cache miss (+- 2 milhoes para cada nest de for)
+
+
+  #pragma omp parallel for private(i) collapse(2)
+>>>>>>> c0eaf302af0d8212a64faab9a43d2b39466b6fa1
   for (j=0;j<NGLL2;j++) {
     for (i=0;i<NGLLX;i++) {
       utempx1.tempx1_2D_25_5[j][i] = hprime_xx[0][i]*ux[j*5 + 0].dummyx_loc_2D_25_5 +
@@ -510,7 +524,8 @@ int iter=0;
                                      hprime_xx[4][i]*uz.dummyz_loc_2D_25_5[j][4];
     }
   }
-
+  
+  #pragma parallel for private(j,i) collapse (3)
   for (k=0;k<NGLLZ;k++) {
     for (j=0;j<NGLLX;j++) {
       for (i=0;i<NGLLX;i++) {
@@ -535,6 +550,8 @@ int iter=0;
     }
   }
 
+
+  #pragma parallel for private(j,i) collapse (2)
   for (j=0;j<NGLLX;j++) {
     for (i=0;i<NGLL2;i++) {
       utempx3.tempx3_2D_5_25[j][i] = ux[i*25].dummyx_loc_2D_5_25*hprime_xxT[j][0] +
@@ -557,6 +574,11 @@ int iter=0;
     }
   }
 
+   /*segundo o programa Zoom version 3.3.3, esse nest de for gasta +- 30% do tempo de execução do programa
+    Utilizando perf stat -e cache-misses para as execuções serial e com for, dá pra perceber um aumento muito significativo de miss na cache de +- 10 vezes. 
+*/
+
+   #pragma omp parallel for private(j,i) collapse (3)
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
@@ -625,7 +647,7 @@ int iter=0;
          }
        }
      }
-
+  //
   for (j=0;j<NGLL2;j++) {
     for (i=0;i<NGLLX;i++) {
       unewtempx1.newtempx1_2D_25_5[j][i] = hprimewgll_xxT[0][i]*utempx1.tempx1_2D_25_5[j][0] +
@@ -647,7 +669,7 @@ int iter=0;
                                            hprimewgll_xxT[4][i]*utempz1.tempz1_2D_25_5[j][4];
     }
   }
-
+  //#pragma omp parallel for private(j,i)
   for (k=0;k<NGLLZ;k++) {
     for (j=0;j<NGLLX;j++) {
       for (i=0;i<NGLLX;i++) {
@@ -671,7 +693,7 @@ int iter=0;
       }
     }
   }
-
+ // #pragma omp parallel for
   for (j=0;j<NGLLX;j++) {
     for (i=0;i<NGLL2;i++) {
       unewtempx3.newtempx3_2D_5_25[j][i] = utempx3.tempx3_2D_5_25[0][i]*hprimewgll_xx[j][0] +
@@ -753,7 +775,9 @@ int iter=0;
 
 
 // save the seismogram at the end of the run
- if((IIN = fopen("seismogram_C_single.txt","w")) == NULL) {
+  char filename[50];
+  sprintf (filename, "seismogram_omp_for_%d.txt", getpid ());
+ if((IIN = fopen(filename,"w")) == NULL) {
          fprintf(stderr,"Cannot create file seismogram_C_single.txt, exiting...\n");
          exit(1);
        }
