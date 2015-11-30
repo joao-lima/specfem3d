@@ -6,12 +6,12 @@ CFLAGS += -DCONFIG_VERBOSE
 CC = gcc
 LDFLAGS = -lm
 
-all: specfem3D-serial teste specfem3D-omp-task-deps specfem3D-omp-for specfem3D-omp-for-static
+all: specfem3D-serial specfem3D-plima-version specfem3D-omp-task-deps specfem3D-omp-for specfem3D-omp-for-static
 
 specfem3D-omp-task-deps: specfem3D-omp-task-deps.c kernels.c
 	$(CC) $(CFLAGS) -fopenmp $^ -o $@ $(LDFLAGS)
 
-teste: teste.c
+specfem3D-plima-version: specfem3D-plima-version.c
 	$(CC) $(CFLAGS) -fopenmp $^ -o $@ $(LDFLAGS)	
 
 specfem3D-omp-for: specfem3D-omp-for.c 
@@ -27,7 +27,7 @@ specfem3D-omp-for-static: specfem3D-omp-for-static.c
 	$(CC) $(CFLAGS) -fopenmp $^ -o $@ $(LDFLAGS)
 
 clean:
-	rm -rf *.o *~ specfem3D-serial teste specfem3D-omp-task-deps specfem3D-omp-for specfem3D-omp-for-static
+	rm -rf *.o *~ specfem3D-serial specfem3D-plima-version specfem3D-omp-task-deps specfem3D-omp-for specfem3D-omp-for-static
 
-.PHONY: specfem3D-omp-task-deps teste specfem3D-omp-for specfem3D-serial specfem3D-profiler specfem3D-omp-for-static
+.PHONY: specfem3D-omp-task-deps specfem3D-plima-version specfem3D-omp-for specfem3D-serial specfem3D-profiler specfem3D-omp-for-static
 

@@ -492,17 +492,6 @@ int iter=0;
    //iter++;
 
 
-<<<<<<< HEAD
-=======
-// subroutines adapted from Deville, Fischer and Mund, High-order methods
-// for incompressible fluid flow, Cambridge University Press (2002),
-// pages 386 and 389 and Figure 8.3.1
-  
- //Os três laços a seguir aumentaram ainda mais o cache miss (+- 2 milhoes para cada nest de for)
-
-
-  #pragma omp parallel for private(i) collapse(2)
->>>>>>> c0eaf302af0d8212a64faab9a43d2b39466b6fa1
   for (j=0;j<NGLL2;j++) {
     for (i=0;i<NGLLX;i++) {
       utempx1.tempx1_2D_25_5[j][i] = hprime_xx[0][i]*ux[j*5 + 0].dummyx_loc_2D_25_5 +
@@ -524,7 +513,7 @@ int iter=0;
                                      hprime_xx[4][i]*uz.dummyz_loc_2D_25_5[j][4];
     }
   }
-  
+
   #pragma parallel for private(j,i) collapse (3)
   for (k=0;k<NGLLZ;k++) {
     for (j=0;j<NGLLX;j++) {
@@ -575,7 +564,7 @@ int iter=0;
   }
 
    /*segundo o programa Zoom version 3.3.3, esse nest de for gasta +- 30% do tempo de execução do programa
-    Utilizando perf stat -e cache-misses para as execuções serial e com for, dá pra perceber um aumento muito significativo de miss na cache de +- 10 vezes. 
+    Utilizando perf stat -e cache-misses para as execuções serial e com for, dá pra perceber um aumento muito significativo de miss na cache de +- 10 vezes.
 */
 
    #pragma omp parallel for private(j,i) collapse (3)

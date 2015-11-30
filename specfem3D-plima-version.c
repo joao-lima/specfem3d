@@ -265,7 +265,6 @@ int main(){
        }
        else
          auxmat = 1;
-       printf ("Pos_mat:%d\n",pos_mat);
        tag_h[pos_mat].hprime_xxT = tag_h[i].hprime_xx;
        tag_h[pos_mat].hprimewgll_xxT = tag_h[i].hprimewgll_xx;
 
@@ -275,7 +274,6 @@ int main(){
 
        fscanf(IIN, "%e\n", &tag_h[i].wgllwgll_xy);
   }
-  printf ("iago\n");
    fclose(IIN);
 
 
