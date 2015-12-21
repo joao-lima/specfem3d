@@ -389,7 +389,6 @@ int main(int argc, char *argv[])
 // compute the transpose matrices
      hprime_xxT[i][j] = hprime_xx[j][i];
      hprimewgll_xxT[i][j] = hprimewgll_xx[j][i];
-     printf ("Pos_mat:%d\n",i*5+j);
      fscanf(IIN, "%e\n", &wgllwgll_yz[j][i]);
      fscanf(IIN, "%e\n", &wgllwgll_xz[j][i]);
      fscanf(IIN, "%e\n", &wgllwgll_xy[j][i]);
