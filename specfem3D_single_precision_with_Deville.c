@@ -51,7 +51,7 @@
 #include <time.h>
 
 //#define CONFIG_VERBOSE	1
-//#define CONFIG_BENCHMARK	1
+#define CONFIG_BENCHMARK	1
 
 // include values created by the mesher
 // done for performance only using static allocation to allow for loop unrolling

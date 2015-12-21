@@ -39,7 +39,8 @@
 
 
 //#define CONFIG_VERBOSE	1
-//#define CONFIG_BENCHMARK	1
+#define CONFIG_BENCHMARK	1
+
 long t_start, t_end;
 static long usecs ();
 
