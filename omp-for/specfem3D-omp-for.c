@@ -49,10 +49,9 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
-#include <omp.h>
 
 //#define CONFIG_VERBOSE	1
-//#define CONFIG_BENCHMARK	1
+#define CONFIG_BENCHMARK	1
 
 // include values created by the mesher
 // done for performance only using static allocation to allow for loop unrolling
@@ -146,10 +145,10 @@ int main(int argc, char *argv[])
     double zstore[NSPEC][NGLLZ][NGLLY][NGLLX];
 
  static union ux_tag {
-   float dummyx_loc;
-   float dummyx_loc_2D_25_5;
-   float dummyx_loc_2D_5_25;
- } ux[125];
+   float dummyx_loc[NGLLZ][NGLLY][NGLLX];
+   float dummyx_loc_2D_25_5[NGLL2][NGLLX];
+   float dummyx_loc_2D_5_25[NGLLX][NGLL2];
+ } ux;
 
  static union uy_tag {
    float dummyy_loc[NGLLZ][NGLLY][NGLLX];
@@ -252,8 +251,8 @@ int main(int argc, char *argv[])
  clock_t timeloop_begin;
  float timeloop_total;
 
- int ispec,iglob;
- size_t i,j,k;
+ int ispec,iglob,i,j,k;
+
  float xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl;
  float duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl;
  float duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl;
@@ -262,8 +261,6 @@ int main(int argc, char *argv[])
  float lambdal,mul,lambdalplus2mul,kappal;
 
  float Usolidnorm,current_value,time,memory_size;
-
- int num_threads = omp_get_max_threads();
 
 // to read external files
  FILE *IIN;
@@ -311,8 +308,23 @@ int main(int argc, char *argv[])
           exit(1);
         }
 #endif
-//// DK DK 33333333333333 now in Fortran
-// read_arrays_solver_(xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,kappav,muv,ibool,rmass_inverse,&myrank,xstore,ystore,zstore);
+
+// read the derivation matrices from external file
+#if 0
+ printf("reading file DATABASES_FOR_SOLVER/matrices.dat\n");
+ if((IIN=fopen("DATABASES_FOR_SOLVER/matrices.dat","r"))==NULL) {
+         fprintf(stderr,"Cannot open file DATABASES_FOR_SOLVER/matrices.dat, exiting...\n");
+         exit(1);
+       }
+#else
+#if defined(CONFIG_VERBOSE)
+ printf("reading file ./DB/matrices.dat\n");
+#endif
+   if((IIN=fopen("./DB/matrices.dat","r"))==NULL) {
+         fprintf(stderr,"Cannot open file DATABASES_FOR_SOLVER/matrices.dat, exiting...\n");
+         exit(1);
+       }
+#endif
 
  for (ispec=0;ispec<NSPEC;ispec++) {
    for (k=0;k<NGLLZ;k++) {
@@ -348,6 +360,10 @@ int main(int argc, char *argv[])
  }
  fclose(IIN);
 
+ //// DK DK 33333333333333 now in Fortran
+ // read_arrays_solver_(xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz,kappav,muv,ibool,rmass_inverse,&myrank,xstore,ystore,zstore);
+
+
 // read the derivation matrices from external file
 #if 0
  printf("reading file DATABASES_FOR_SOLVER/matrices.dat\n");
@@ -373,7 +389,6 @@ int main(int argc, char *argv[])
 // compute the transpose matrices
      hprime_xxT[i][j] = hprime_xx[j][i];
      hprimewgll_xxT[i][j] = hprimewgll_xx[j][i];
-
      fscanf(IIN, "%e\n", &wgllwgll_yz[j][i]);
      fscanf(IIN, "%e\n", &wgllwgll_xz[j][i]);
      fscanf(IIN, "%e\n", &wgllwgll_xy[j][i]);
@@ -411,7 +426,9 @@ int main(int argc, char *argv[])
 // in order to monitor the simulation
 // this can remain serial because it is done only every NTSTEP_BETWEEN_OUTPUT_INFO time steps
    if((it % NTSTEP_BETWEEN_OUTPUT_INFO) == 0 || it == 5 || it == NSTEP) {
+
      Usolidnorm = -1.f;
+
      for (iglob = 0; iglob < NGLOB; iglob++) {
        current_value = sqrtf(displx[iglob]*displx[iglob] + disply[iglob]*disply[iglob] + displz[iglob]*displz[iglob]);
        if(current_value > Usolidnorm) { Usolidnorm = current_value; }
@@ -449,7 +466,6 @@ int main(int argc, char *argv[])
 
 // big loop over all the global points (not elements) in the mesh to update
 // the displacement and velocity vectors and clear the acceleration vector
-
  for (i=0;i<NGLOB;i++) {
    displx[i] += deltat*velocx[i] + deltatsqover2*accelx[i];
    disply[i] += deltat*velocy[i] + deltatsqover2*accely[i];
@@ -473,32 +489,35 @@ int main(int argc, char *argv[])
 // using indirect addressing (contained in array ibool)
 // and then to compute the elemental contribution
 // to the acceleration vector of each element of the finite-element mesh
-int iter=0;
-
  for (ispec=0;ispec<NSPEC;ispec++) {
-   //#pragma omp parallel for private(iglob) collapse(3)
+
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
            iglob = ibool[ispec][k][j][i];
-           ux[k*25+j*5+i].dummyx_loc = displx[iglob];
+           ux.dummyx_loc[k][j][i] = displx[iglob];
            uy.dummyy_loc[k][j][i] = disply[iglob];
            uz.dummyz_loc[k][j][i] = displz[iglob];
        }
      }
    }
 
-   //printf ("passou daqui:%d\n",iter);
-   //iter++;
+
+// big loop over all the elements in the mesh to compute the elemental contribution
+// to the acceleration vector of each element of the finite-element mesh
+
+// subroutines adapted from Deville, Fischer and Mund, High-order methods
+// for incompressible fluid flow, Cambridge University Press (2002),
+// pages 386 and 389 and Figure 8.3.1
 
 
   for (j=0;j<NGLL2;j++) {
     for (i=0;i<NGLLX;i++) {
-      utempx1.tempx1_2D_25_5[j][i] = hprime_xx[0][i]*ux[j*5 + 0].dummyx_loc_2D_25_5 +
-                                     hprime_xx[1][i]*ux[j*5 + 1].dummyx_loc_2D_25_5 +
-                                     hprime_xx[2][i]*ux[j*5 + 2].dummyx_loc_2D_25_5 +
-                                     hprime_xx[3][i]*ux[j*5 + 3].dummyx_loc_2D_25_5 +
-                                     hprime_xx[4][i]*ux[j*5 + 4].dummyx_loc_2D_25_5;
+      utempx1.tempx1_2D_25_5[j][i] = hprime_xx[0][i]*ux.dummyx_loc_2D_25_5[j][0] +
+                                     hprime_xx[1][i]*ux.dummyx_loc_2D_25_5[j][1] +
+                                     hprime_xx[2][i]*ux.dummyx_loc_2D_25_5[j][2] +
+                                     hprime_xx[3][i]*ux.dummyx_loc_2D_25_5[j][3] +
+                                     hprime_xx[4][i]*ux.dummyx_loc_2D_25_5[j][4];
 
       utempy1.tempy1_2D_25_5[j][i] = hprime_xx[0][i]*uy.dummyy_loc_2D_25_5[j][0] +
                                      hprime_xx[1][i]*uy.dummyy_loc_2D_25_5[j][1] +
@@ -514,15 +533,16 @@ int iter=0;
     }
   }
 
-  #pragma parallel for private(j,i) collapse (3)
+
+
   for (k=0;k<NGLLZ;k++) {
     for (j=0;j<NGLLX;j++) {
       for (i=0;i<NGLLX;i++) {
-        tempx2[k][j][i] = ux[k*25 + i].dummyx_loc*hprime_xxT[j][0] +
-                          ux[k*25 + 5 + i].dummyx_loc*hprime_xxT[j][1] +
-                          ux[k*25 + 10 + i].dummyx_loc*hprime_xxT[j][2] +
-                          ux[k*25 + 15 + i].dummyx_loc*hprime_xxT[j][3] +
-                          ux[k*25 + 20 +  i].dummyx_loc*hprime_xxT[j][4];
+        tempx2[k][j][i] = ux.dummyx_loc[k][0][i]*hprime_xxT[j][0] +
+                          ux.dummyx_loc[k][1][i]*hprime_xxT[j][1] +
+                          ux.dummyx_loc[k][2][i]*hprime_xxT[j][2] +
+                          ux.dummyx_loc[k][3][i]*hprime_xxT[j][3] +
+                          ux.dummyx_loc[k][4][i]*hprime_xxT[j][4];
 
         tempy2[k][j][i] = uy.dummyy_loc[k][0][i]*hprime_xxT[j][0] +
                           uy.dummyy_loc[k][1][i]*hprime_xxT[j][1] +
@@ -538,16 +558,22 @@ int iter=0;
       }
     }
   }
+  /*
+ for (k=0; k < NGLLZ; k++)
+  for (j=0; j < NGLLY; j++){
+    for (i=0; i< NGLLX; i++){
+        printf ("x%d y%d z%d : %f %f %f\n", k,j,i,tempx2[k][j][i], tempy2[k][j][i], tempz2[k][j][i]);
+    }
+  }
+  */
 
-
-  #pragma parallel for private(j,i) collapse (2)
   for (j=0;j<NGLLX;j++) {
     for (i=0;i<NGLL2;i++) {
-      utempx3.tempx3_2D_5_25[j][i] = ux[i*25].dummyx_loc_2D_5_25*hprime_xxT[j][0] +
-                                     ux[1+i*25].dummyx_loc_2D_5_25*hprime_xxT[j][1] +
-                                     ux[2+i*25].dummyx_loc_2D_5_25*hprime_xxT[j][2] +
-                                     ux[3+i*25].dummyx_loc_2D_5_25*hprime_xxT[j][3] +
-                                     ux[4+i*25].dummyx_loc_2D_5_25*hprime_xxT[j][4];
+      utempx3.tempx3_2D_5_25[j][i] = ux.dummyx_loc_2D_5_25[0][i]*hprime_xxT[j][0] +
+                                     ux.dummyx_loc_2D_5_25[1][i]*hprime_xxT[j][1] +
+                                     ux.dummyx_loc_2D_5_25[2][i]*hprime_xxT[j][2] +
+                                     ux.dummyx_loc_2D_5_25[3][i]*hprime_xxT[j][3] +
+                                     ux.dummyx_loc_2D_5_25[4][i]*hprime_xxT[j][4];
 
       utempy3.tempy3_2D_5_25[j][i] = uy.dummyy_loc_2D_5_25[0][i]*hprime_xxT[j][0] +
                                      uy.dummyy_loc_2D_5_25[1][i]*hprime_xxT[j][1] +
@@ -562,12 +588,7 @@ int iter=0;
                                      uz.dummyz_loc_2D_5_25[4][i]*hprime_xxT[j][4];
     }
   }
-
-   /*segundo o programa Zoom version 3.3.3, esse nest de for gasta +- 30% do tempo de execução do programa
-    Utilizando perf stat -e cache-misses para as execuções serial e com for, dá pra perceber um aumento muito significativo de miss na cache de +- 10 vezes.
-*/
-
-   #pragma omp parallel for private(j,i) collapse (3)
+   
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
@@ -577,10 +598,10 @@ int iter=0;
          xiyl = xiy[ispec][k][j][i];
          xizl = xiz[ispec][k][j][i];
          etaxl = etax[ispec][k][j][i];
-         etayl = etay[ispec][k][j][i];
          etazl = etaz[ispec][k][j][i];
          gammaxl = gammax[ispec][k][j][i];
          gammayl = gammay[ispec][k][j][i];
+         etayl = etay[ispec][k][j][i];
          gammazl = gammaz[ispec][k][j][i];
          jacobianl = 1.f / (xixl*(etayl*gammazl-etazl*gammayl)-xiyl*(etaxl*gammazl-etazl*gammaxl)+xizl*(etaxl*gammayl-etayl*gammaxl));
 
@@ -636,7 +657,7 @@ int iter=0;
          }
        }
      }
-  //
+
   for (j=0;j<NGLL2;j++) {
     for (i=0;i<NGLLX;i++) {
       unewtempx1.newtempx1_2D_25_5[j][i] = hprimewgll_xxT[0][i]*utempx1.tempx1_2D_25_5[j][0] +
@@ -658,7 +679,7 @@ int iter=0;
                                            hprimewgll_xxT[4][i]*utempz1.tempz1_2D_25_5[j][4];
     }
   }
-  //#pragma omp parallel for private(j,i)
+
   for (k=0;k<NGLLZ;k++) {
     for (j=0;j<NGLLX;j++) {
       for (i=0;i<NGLLX;i++) {
@@ -682,7 +703,7 @@ int iter=0;
       }
     }
   }
- // #pragma omp parallel for
+
   for (j=0;j<NGLLX;j++) {
     for (i=0;i<NGLL2;i++) {
       unewtempx3.newtempx3_2D_5_25[j][i] = utempx3.tempx3_2D_5_25[0][i]*hprimewgll_xx[j][0] +
@@ -767,7 +788,7 @@ int iter=0;
   char filename[50];
   sprintf (filename, "seismogram_omp_for_%d.txt", getpid ());
  if((IIN = fopen(filename,"w")) == NULL) {
-         fprintf(stderr,"Cannot create file seismogram_C_single.txt, exiting...\n");
+         fprintf(stderr,"Cannot create file %s, exiting...\n", filename);
          exit(1);
        }
  for (it=0;it<NSTEP;it++)
