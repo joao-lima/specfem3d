@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
 #if defined(CONFIG_VERBOSE)
   printf("reading file ./DB/proc000000_reg1_database.dat\n");
 #endif
-    if((IIN=fopen("./DB/proc000000_reg1_database.dat","r"))==NULL) {
+    if((IIN=fopen("../DB/proc000000_reg1_database.dat","r"))==NULL) {
           fprintf(stderr,"Cannot open file ../multi_GPU_MPI/DATABASES_FOR_SOLVER/proc000000_reg1_database.dat, exiting...\n");
           exit(1);
         }
@@ -318,9 +318,9 @@ int main(int argc, char *argv[])
        }
 #else
 #if defined(CONFIG_VERBOSE)
- printf("reading file ./DB/matrices.dat\n");
+ printf("reading file ../DB/matrices.dat\n");
 #endif
-   if((IIN=fopen("./DB/matrices.dat","r"))==NULL) {
+   if((IIN=fopen("../DB/matrices.dat","r"))==NULL) {
          fprintf(stderr,"Cannot open file DATABASES_FOR_SOLVER/matrices.dat, exiting...\n");
          exit(1);
        }
@@ -375,7 +375,7 @@ int main(int argc, char *argv[])
 #if defined(CONFIG_VERBOSE)
  printf("reading file ./DB/matrices.dat\n");
 #endif
-   if((IIN=fopen("./DB/matrices.dat","r"))==NULL) {
+   if((IIN=fopen("../DB/matrices.dat","r"))==NULL) {
          fprintf(stderr,"Cannot open file DATABASES_FOR_SOLVER/matrices.dat, exiting...\n");
          exit(1);
        }
@@ -398,6 +398,7 @@ int main(int argc, char *argv[])
 
 // clear initial vectors before starting the time loop
 // (can remain serial because done only once before entering the time loop)
+#pragma omp parallel for firstprivate(i)
  for (i=0;i<NGLOB;i++) {
    displx[i] = 0.f; // VERYSMALLVAL;
    disply[i] = 0.f; // VERYSMALLVAL;
@@ -466,6 +467,7 @@ int main(int argc, char *argv[])
 
 // big loop over all the global points (not elements) in the mesh to update
 // the displacement and velocity vectors and clear the acceleration vector
+#pragma omp parallel for firstprivate(i)
  for (i=0;i<NGLOB;i++) {
    displx[i] += deltat*velocx[i] + deltatsqover2*accelx[i];
    disply[i] += deltat*velocy[i] + deltatsqover2*accely[i];
@@ -478,6 +480,7 @@ int main(int argc, char *argv[])
 
 // we leave this loop as separate (in principle it could be merged with the previous loop)
 // because then the Intel icc compiler can replace it with a call to memset(0), which is faster
+#pragma omp parallel for firstprivate(i)
  for (i=0;i<NGLOB;i++) {
    accelx[i] = 0.f;
    accely[i] = 0.f;
@@ -491,6 +494,7 @@ int main(int argc, char *argv[])
 // to the acceleration vector of each element of the finite-element mesh
  for (ispec=0;ispec<NSPEC;ispec++) {
 
+#pragma omp parallel for firstprivate(k,j,i) collapse(3)
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
@@ -511,6 +515,7 @@ int main(int argc, char *argv[])
 // pages 386 and 389 and Figure 8.3.1
 
 
+#pragma omp parallel for firstprivate(j,i) collapse(2)
   for (j=0;j<NGLL2;j++) {
     for (i=0;i<NGLLX;i++) {
       utempx1.tempx1_2D_25_5[j][i] = hprime_xx[0][i]*ux.dummyx_loc_2D_25_5[j][0] +
@@ -535,6 +540,7 @@ int main(int argc, char *argv[])
 
 
 
+#pragma omp parallel for firstprivate(k,j,i) collapse(3)
   for (k=0;k<NGLLZ;k++) {
     for (j=0;j<NGLLX;j++) {
       for (i=0;i<NGLLX;i++) {
@@ -567,6 +573,7 @@ int main(int argc, char *argv[])
   }
   */
 
+#pragma omp parallel for firstprivate(j,i) collapse(2)
   for (j=0;j<NGLLX;j++) {
     for (i=0;i<NGLL2;i++) {
       utempx3.tempx3_2D_5_25[j][i] = ux.dummyx_loc_2D_5_25[0][i]*hprime_xxT[j][0] +
@@ -589,6 +596,7 @@ int main(int argc, char *argv[])
     }
   }
    
+#pragma omp parallel for firstprivate(k,j,i) collapse(3)
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
@@ -658,6 +666,7 @@ int main(int argc, char *argv[])
        }
      }
 
+#pragma omp parallel for firstprivate(j,i) collapse(2)
   for (j=0;j<NGLL2;j++) {
     for (i=0;i<NGLLX;i++) {
       unewtempx1.newtempx1_2D_25_5[j][i] = hprimewgll_xxT[0][i]*utempx1.tempx1_2D_25_5[j][0] +
@@ -680,6 +689,7 @@ int main(int argc, char *argv[])
     }
   }
 
+#pragma omp parallel for firstprivate(k,j,i) collapse(3)
   for (k=0;k<NGLLZ;k++) {
     for (j=0;j<NGLLX;j++) {
       for (i=0;i<NGLLX;i++) {
@@ -704,6 +714,7 @@ int main(int argc, char *argv[])
     }
   }
 
+#pragma omp parallel for firstprivate(j,i) collapse(2)
   for (j=0;j<NGLLX;j++) {
     for (i=0;i<NGLL2;i++) {
       unewtempx3.newtempx3_2D_5_25[j][i] = utempx3.tempx3_2D_5_25[0][i]*hprimewgll_xx[j][0] +
@@ -726,14 +737,18 @@ int main(int argc, char *argv[])
     }
   }
 
+#pragma omp parallel for firstprivate(k,j,i) collapse(3)
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
 
 // sum contributions from each element to the global mesh using indirect addressing
          iglob = ibool[ispec][k][j][i];
+#pragma omp atomic
          accelx[iglob] -= (wgllwgll_yz[k][j]*unewtempx1.newtempx1[k][j][i] + wgllwgll_xz[k][i]*newtempx2[k][j][i] + wgllwgll_xy[j][i]*unewtempx3.newtempx3[k][j][i]);
+#pragma omp atomic
          accely[iglob] -= (wgllwgll_yz[k][j]*unewtempy1.newtempy1[k][j][i] + wgllwgll_xz[k][i]*newtempy2[k][j][i] + wgllwgll_xy[j][i]*unewtempy3.newtempy3[k][j][i]);
+#pragma omp atomic
          accelz[iglob] -= (wgllwgll_yz[k][j]*unewtempz1.newtempz1[k][j][i] + wgllwgll_xz[k][i]*newtempz2[k][j][i] + wgllwgll_xy[j][i]*unewtempz3.newtempz3[k][j][i]);
 
        }
@@ -744,6 +759,7 @@ int main(int argc, char *argv[])
 
 // big loop over all the global points (not elements) in the mesh to update
 // the acceleration and velocity vectors
+#pragma omp parallel for firstprivate(i) 
  for (i=0;i<NGLOB;i++) {
    accelx[i] *= rmass_inverse[i];
    accely[i] *= rmass_inverse[i];
@@ -758,6 +774,7 @@ int main(int argc, char *argv[])
  time = (it-1)*deltat;
  accelz[ibool[NSPEC_SOURCE-1][1][1][1]] += 1.e4f * (1.f - 2.f*a*(time-t0)*(time-t0)) * expf(-a*(time-t0)*(time-t0)) / rho;
 
+#pragma omp parallel for firstprivate(i) 
  for (i=0;i<NGLOB;i++) {
    velocx[i] += deltatover2*accelx[i];
    velocy[i] += deltatover2*accely[i];
@@ -774,7 +791,7 @@ int main(int argc, char *argv[])
 #if defined(CONFIG_BENCHMARK)
 #if defined(_OPENMP)
   /* threads NSPEC NGLOB time */
-  fprintf(stdout, "specfem3d;omp;%d;%d;%d;%d;%d;%d;%f;%.6f\n", omp_get_max_threads(), NSPEC, NGLOB, BS_NSPEC, BS_NGLOB, NSTEP, deltat,
+  fprintf(stdout, "specfem3d;omp-for;%d;%d;%d;%d;%d;%d;%f;%.6f\n", omp_get_max_threads(), NSPEC, NGLOB, BS_NSPEC, BS_NGLOB, NSTEP, deltat,
   	 (float) (t_end - t_start) / 1000000.f);
 #else /* _OPENMP */
   fprintf(stdout, "specfem3d;serial;%d;%d;%d;%d;%d;%d;%f;%.6f\n", 1, NSPEC, NGLOB, 1, 1, NSTEP, deltat,
