@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
 #if defined(CONFIG_VERBOSE)
   printf("reading file ./DB/proc000000_reg1_database.dat\n");
 #endif
-    if((IIN=fopen("./DB/proc000000_reg1_database.dat","r"))==NULL) {
+    if((IIN=fopen("../DB/proc000000_reg1_database.dat","r"))==NULL) {
           fprintf(stderr,"Cannot open file ../multi_GPU_MPI/DATABASES_FOR_SOLVER/proc000000_reg1_database.dat, exiting...\n");
           exit(1);
         }
@@ -320,7 +320,7 @@ int main(int argc, char *argv[])
 #if defined(CONFIG_VERBOSE)
  printf("reading file ./DB/matrices.dat\n");
 #endif
-   if((IIN=fopen("./DB/matrices.dat","r"))==NULL) {
+   if((IIN=fopen("../DB/matrices.dat","r"))==NULL) {
          fprintf(stderr,"Cannot open file DATABASES_FOR_SOLVER/matrices.dat, exiting...\n");
          exit(1);
        }
@@ -373,10 +373,10 @@ int main(int argc, char *argv[])
        }
 #else
 #if defined(CONFIG_VERBOSE)
- printf("reading file ./DB/matrices.dat\n");
+ printf("reading file ../DB/matrices.dat\n");
 #endif
-   if((IIN=fopen("./DB/matrices.dat","r"))==NULL) {
-         fprintf(stderr,"Cannot open file DATABASES_FOR_SOLVER/matrices.dat, exiting...\n");
+   if((IIN=fopen("../DB/matrices.dat","r"))==NULL) {
+         fprintf(stderr,"Cannot open file ../DB/matrices.dat, exiting...\n");
          exit(1);
        }
 #endif
