@@ -49,6 +49,9 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
 
 //#define CONFIG_VERBOSE	1
 #define CONFIG_BENCHMARK	1
