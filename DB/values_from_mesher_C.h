@@ -1,8 +1,8 @@
  #define NSPEC         2160
  #define NGLOB       147645
 // #define NSTEP         6000
-// #define NSTEP         600
- #define NSTEP         20
+#define NSTEP         600
+// #define NSTEP         20
 #define deltat   0.2000000000E+00f
  #define NGLOB2DMAX_XMIN_XMAX         4294
  #define NGLOB2DMAX_YMIN_YMAX         4294
