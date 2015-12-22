@@ -196,9 +196,9 @@ int main(){
    fclose(IIN);
   #else
   #if defined(CONFIG_VERBOSE)
-    printf("reading file ./DB/proc000000_reg1_database.dat\n");
+    printf("reading file ../DB/proc000000_reg1_database.dat\n");
   #endif
-      if((IIN=fopen("./DB/proc000000_reg1_database.dat","r"))==NULL) {
+      if((IIN=fopen("../DB/proc000000_reg1_database.dat","r"))==NULL) {
             fprintf(stderr,"Cannot open file ../multi_GPU_MPI/DATABASES_FOR_SOLVER/proc000000_reg1_database.dat, exiting...\n");
             exit(1);
           }
@@ -248,7 +248,7 @@ int main(){
   #if defined(CONFIG_VERBOSE)
    printf("reading file ./DB/matrices.dat\n");
   #endif
-     if((IIN=fopen("./DB/matrices.dat","r"))==NULL) {
+     if((IIN=fopen("../DB/matrices.dat","r"))==NULL) {
            fprintf(stderr,"Cannot open file DATABASES_FOR_SOLVER/matrices.dat, exiting...\n");
            exit(1);
          }
@@ -633,8 +633,10 @@ int main(){
 
 
  // save the seismogram at the end of the run
-  if((IIN = fopen("saida.text","w")) == NULL) {
-          fprintf(stderr,"Cannot create file seismogram_C_single.txt, exiting...\n");
+  char filename[50];
+  sprintf (filename, "seismogram_aos_serial_%d.txt", getpid ());
+ if((IIN = fopen(filename,"w")) == NULL) {
+         fprintf(stderr,"Cannot create file %s, exiting...\n", filename);
           exit(1);
         }
   for (it=0;it<NSTEP;it++)
