@@ -4,7 +4,9 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
+ #if defined(_OPENMP)
 #include <omp.h>
+#endif
 
 #include "./DB/values_from_mesher_C.h"
 
@@ -390,7 +392,6 @@ int main(){
         }
       }
 
-      #pragma parallel for private(j,i) collapse (3)
       for (k=0;k<NGLLZ;k++) {
         for (j=0;j<NGLLX;j++) {
           for (i=0;i<NGLLX;i++) {
@@ -416,7 +417,6 @@ int main(){
       }
 
 
-        #pragma parallel for private(j,i) collapse (2)
         for (j=0;j<NGLLX;j++) {
           for (i=0;i<NGLL2;i++) {
             utemp3[j*25+i].tempx3_2D_5_25 = tag_u[i].dummyx_loc_2D_5_25*tag_h[j*5 + 0].hprime_xxT +
@@ -439,7 +439,6 @@ int main(){
           }
         }
 
-    #pragma omp parallel for private(j,i) collapse (3)
     for (i=0;k<NGLLZ*NGLLY*NGLLX;k++) {
        // compute derivatives of ux, uy and uz with respect to x, y and z
               xixl = tag_nspec[ispec][i].xix;
