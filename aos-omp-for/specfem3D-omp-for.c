@@ -46,17 +46,35 @@
 long t_start, t_end;
 static long usecs ();
 
+static long _counters[64];
 static long _t1, _t2;
-static inline void timer_begin(void)
+
+static inline void timer_init(void)
+{
+	int i;
+	for(i= 0; i < 64; i++)
+		_counters[i]= 0;
+}
+
+static inline void timer_begin(int i)
 {
 	_t1 = usecs();
 }
 
-static inline void timer_end(const char *str)
+static inline void timer_end(int i)
 {
 	_t2 = usecs();
-	fprintf(stdout, "TIMER %s %.6f\n", str, (float) (_t2 - _t1) / 1000000.f);
-	fflush(stdout);
+	_counters[i] += (_t2 - _t1);
+}
+
+static inline void report(int n)
+{
+	int i;
+	for(i= 0; i < n; i++)
+	{
+		fprintf(stdout, "TIMER%d %.6f\n", i, (float) _counters[i] / 1000000.f);
+		fflush(stdout);
+	}
 }
 
 int main(){
@@ -179,6 +197,8 @@ int main(){
   }var[NGLOB];
 
   FILE *IIN;
+
+  timer_init();
 
   #if defined(CONFIG_VERBOSE)
    printf("\nNSPEC = %d\n",NSPEC);
@@ -352,7 +372,7 @@ int main(){
         exit(1);
       }
     }
-    timer_begin();
+    timer_begin(0);
 #pragma omp parallel for private(i)
     for (i=0;i<NGLOB;i++) {
       var[i].displx += deltat*var[i].velocx + deltatsqover2*var[i].accelx;
@@ -367,12 +387,12 @@ int main(){
       var[i].accely = 0.f;
       var[i].accelz = 0.f;
     }
-    timer_end("loop1");
+    timer_end(0);
 
 
     for (ispec=0;ispec<NSPEC;ispec++) {
 
-    timer_begin();
+    timer_begin(1);
 #pragma omp parallel for private(i,iglob)
       for (i=0; i < NGLLX * NGLLY * NGLLZ; i++){
           iglob = ibool[ispec][i];
@@ -380,10 +400,10 @@ int main(){
           tag_u[i].dummyy_loc = var[iglob].displx;
           tag_u[i].dummyz_loc = var[iglob].displx;
       }
-    timer_end("loop2");
+    timer_end(1);
 
 
-    timer_begin();
+    timer_begin(2);
 #pragma omp parallel for private(j,i) collapse(2)
       for (j=0;j<NGLL2;j++) {
         for (i=0;i<NGLLX;i++) {
@@ -406,9 +426,9 @@ int main(){
                                          tag_h[i+20].hprime_xx*tag_u[j*5+4].dummyz_loc_2D_25_5;
         }
       }
-    timer_end("loop3");
+    timer_end(2);
 
-    timer_begin();
+    timer_begin(3);
 #pragma omp parallel for private(k,j,i) collapse(3)
       for (k=0;k<NGLLZ;k++) {
         for (j=0;j<NGLLX;j++) {
@@ -433,10 +453,10 @@ int main(){
           }
         }
       }
-    timer_end("loop4");
+    timer_end(3);
 
 
-    timer_begin();
+    timer_begin(4);
 #pragma omp parallel for private(j,i) collapse(2)
         for (j=0;j<NGLLX;j++) {
           for (i=0;i<NGLL2;i++) {
@@ -459,9 +479,9 @@ int main(){
                                            tag_u[100+i].dummyz_loc_2D_5_25*tag_h[j*5+4].hprime_xxT;
           }
         }
-    timer_end("loop5");
+    timer_end(4);
 
-    timer_begin();
+    timer_begin(5);
 #pragma omp parallel for private(i) 
     for (i=0;i < NGLLZ*NGLLY*NGLLX; i++) {
 	  float lambdal,mul,lambdalplus2mul,kappal;
@@ -529,9 +549,9 @@ int main(){
           utemp3[i].tempz3 = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl);
 
       }
-    timer_end("loop6");
+    timer_end(5);
 
-    timer_begin();
+    timer_begin(6);
 #pragma omp parallel for private(j,i) collapse(2)
       for (j=0;j<NGLL2;j++) {
         for (i=0;i<NGLLX;i++) {
@@ -554,11 +574,11 @@ int main(){
                                                tag_h[i+20].hprimewgll_xxT*utemp[j*5+4].tempz1_2D_25_5;
         }
       }
-    timer_end("loop7");
+    timer_end(6);
 
 //estou aqui
 
-    timer_begin();
+    timer_begin(7);
 #pragma omp parallel for private(k,j,i,aux) collapse(3)
       for (k=0;k<NGLLZ;k++) {
         for (j=0;j<NGLLX;j++) {
@@ -584,9 +604,9 @@ int main(){
           }
         }
       }
-    timer_end("loop8");
+    timer_end(7);
 
-    timer_begin();
+    timer_begin(8);
 #pragma omp parallel for private(j,i,aux) collapse(2)
         for (j=0;j<NGLLX;j++) {
           for (i=0;i<NGLL2;i++) {
@@ -610,9 +630,9 @@ int main(){
                                                  utemp3[i+100].tempz3_2D_5_25*tag_h[j*25+4].hprimewgll_xx;
           }
         }
-    timer_end("loop9");
+    timer_end(8);
 
-    timer_begin();
+    timer_begin(9);
 #pragma omp parallel for private(k,j,i,aux,aux2) collapse(3)
      for (k=0;k<NGLLZ;k++) {
        for (j=0;j<NGLLY;j++) {
@@ -630,19 +650,19 @@ int main(){
             }
           }
         }
-    timer_end("loop10");
+    timer_end(9);
  }  // end of main loop on all the elements
 
 // big loop over all the global points (not elements) in the mesh to update
 // the acceleration and velocity vectors
-    timer_begin();
+    timer_begin(10);
 #pragma omp parallel for private(i) 
  for (i=0;i<NGLOB;i++) {
    var[i].accelx *= rmass_inverse[i];
    var[i].accely *= rmass_inverse[i];
    var[i].accelz *= rmass_inverse[i];
  }
-    timer_end("loop11");
+    timer_end(10);
 
  // add the earthquake source at a given grid point
  // this is negligible and is intrinsically serial because it is done by only
@@ -652,14 +672,14 @@ int main(){
   time = (it-1)*deltat;
   var[ibool[NSPEC_SOURCE-1][31]].accelz += 1.e4f * (1.f - 2.f*a*(time-t0)*(time-t0)) * expf(-a*(time-t0)*(time-t0)) / rho;
 
-    timer_begin();
+    timer_begin(11);
 #pragma omp parallel for private(i) 
   for (i=0;i<NGLOB;i++) {
     var[i].velocx += deltatover2*var[i].accelx;
     var[i].velocy += deltatover2*var[i].accely;
     var[i].velocz += deltatover2*var[i].accelz;
   }
-    timer_end("loop12");
+    timer_end(11);
 
  // record a seismogram to check that the simulation went well
  // we subtract one to the element number of the receiver because arrays start at 0 in C
@@ -667,6 +687,8 @@ int main(){
 
   } // end of the serial time loop
    t_end = usecs ();
+
+  report(12);
 
  #if defined(CONFIG_BENCHMARK)
  #if defined(_OPENMP)
