@@ -47,12 +47,12 @@ long t_start, t_end;
 static long usecs ();
 
 static long _t1, _t2;
-static inline timer_begin(void)
+static inline void timer_begin(void)
 {
 	_t1 = usecs();
 }
 
-static inline timer_end(const char *str)
+static inline void timer_end(const char *str)
 {
 	_t2 = usecs();
 	fprintf(stdout, "TIMER %s %.6f\n", str, (float) (_t2 - _t1) / 1000000.f);
