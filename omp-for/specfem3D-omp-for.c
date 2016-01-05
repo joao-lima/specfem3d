@@ -256,13 +256,6 @@ int main(int argc, char *argv[])
 
  int ispec,iglob,i,j,k;
 
- float xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl;
- float duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl;
- float duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl;
- float duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl;
- float sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz;
- float lambdal,mul,lambdalplus2mul,kappal;
-
  float Usolidnorm,current_value,time,memory_size;
 
 // to read external files
@@ -496,8 +489,7 @@ int main(int argc, char *argv[])
 // and then to compute the elemental contribution
 // to the acceleration vector of each element of the finite-element mesh
  for (ispec=0;ispec<NSPEC;ispec++) {
-
-#pragma omp parallel for private(k,j,i) collapse(3)
+#pragma omp parallel for private(k,j,i) firstprivate(ispec) collapse(3)
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
@@ -599,10 +591,16 @@ int main(int argc, char *argv[])
     }
   }
    
-#pragma omp parallel for private(k,j,i) collapse(3)
+#pragma omp parallel for private(k,j,i) firstprivate(ispec) collapse(3)
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
+ float xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl;
+ float duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl;
+ float duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl;
+ float duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl;
+ float sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz;
+ float lambdal,mul,lambdalplus2mul,kappal;
 
 // compute derivatives of ux, uy and uz with respect to x, y and z
          xixl = xix[ispec][k][j][i];
@@ -740,11 +738,10 @@ int main(int argc, char *argv[])
     }
   }
 
-#pragma omp parallel for private(k,j,i) collapse(3)
+#pragma omp parallel for private(k,j,i,iglob) firstprivate(ispec) collapse(3)
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
-
 // sum contributions from each element to the global mesh using indirect addressing
          iglob = ibool[ispec][k][j][i];
 #pragma omp atomic
