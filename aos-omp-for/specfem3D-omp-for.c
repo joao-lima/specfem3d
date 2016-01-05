@@ -114,12 +114,9 @@ int main(){
   }tag_nspec[NSPEC][NGLLZ*NGLLY*NGLLX];
 
 
-  float xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl;
   float duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl;
   float duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl;
   float duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl;
-  float sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz;
-  float lambdal,mul,lambdalplus2mul,kappal;
 
   static struct unewtemp1{
     float newtempx1, newtempy1, newtempz1;
@@ -364,7 +361,7 @@ int main(){
 
     for (ispec=0;ispec<NSPEC;ispec++) {
 
-#pragma omp parallel for private(i)
+#pragma omp parallel for private(i,iglob)
       for (i=0; i < NGLLX * NGLLY * NGLLZ; i++){
           iglob = ibool[ispec][i];
           tag_u[i].dummyx_loc = var[iglob].displx;
@@ -447,6 +444,9 @@ int main(){
 
 #pragma omp parallel for private(i) 
     for (i=0;i < NGLLZ*NGLLY*NGLLX; i++) {
+	  float lambdal,mul,lambdalplus2mul,kappal;
+	      float xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl;
+	  float sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz;
        // compute derivatives of ux, uy and uz with respect to x, y and z
               xixl = tag_nspec[ispec][i].xix;
               xiyl = tag_nspec[ispec][i].xiy;
@@ -535,7 +535,7 @@ int main(){
 
 //estou aqui
 
-#pragma omp parallel for private(k,j,i) collapse(3)
+#pragma omp parallel for private(k,j,i,aux) collapse(3)
       for (k=0;k<NGLLZ;k++) {
         for (j=0;j<NGLLX;j++) {
           for (i=0;i<NGLLX;i++) {
@@ -561,7 +561,7 @@ int main(){
         }
       }
 
-#pragma omp parallel for private(j,i) collapse(2)
+#pragma omp parallel for private(j,i,aux) collapse(2)
         for (j=0;j<NGLLX;j++) {
           for (i=0;i<NGLL2;i++) {
             aux = j*25+i;
@@ -585,7 +585,7 @@ int main(){
           }
         }
 
-#pragma omp parallel for private(k,j,i) collapse(3)
+#pragma omp parallel for private(k,j,i,aux,aux2) collapse(3)
      for (k=0;k<NGLLZ;k++) {
        for (j=0;j<NGLLY;j++) {
           for (i=0;i<NGLLX;i++) {
