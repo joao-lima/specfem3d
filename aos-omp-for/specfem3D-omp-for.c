@@ -393,7 +393,7 @@ int main(){
     for (ispec=0;ispec<NSPEC;ispec++) {
 
     timer_begin(1);
-#pragma omp parallel for private(i,iglob)
+#pragma omp parallel for private(i,iglob) firstprivate(ispec)
       for (i=0; i < NGLLX * NGLLY * NGLLZ; i++){
           iglob = ibool[ispec][i];
           tag_u[i].dummyx_loc = var[iglob].displx;
@@ -482,7 +482,7 @@ int main(){
     timer_end(4);
 
     timer_begin(5);
-#pragma omp parallel for private(i) 
+#pragma omp parallel for private(i) firstprivate(ispec)
     for (i=0;i < NGLLZ*NGLLY*NGLLX; i++) {
 	  float lambdal,mul,lambdalplus2mul,kappal;
 	      float xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl;
@@ -633,7 +633,7 @@ int main(){
     timer_end(8);
 
     timer_begin(9);
-#pragma omp parallel for private(k,j,i,aux,aux2,iglob) collapse(3)
+#pragma omp parallel for private(k,j,i,aux,aux2,iglob) firstprivate(ispec) collapse(3)
      for (k=0;k<NGLLZ;k++) {
        for (j=0;j<NGLLY;j++) {
           for (i=0;i<NGLLX;i++) {
