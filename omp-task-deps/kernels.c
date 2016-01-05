@@ -62,7 +62,7 @@
 #ifndef USE_PATHS_ROSA
 #include "../multi_GPU_MPI/DATABASES_FOR_SOLVER/values_from_mesher_C.h"
 #else
-#include "./DB/values_from_mesher_C.h"
+#include "../DB/values_from_mesher_C.h"
 #endif
 
 // constant value of the time step in the main time loop
