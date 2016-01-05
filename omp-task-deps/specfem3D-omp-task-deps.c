@@ -68,7 +68,7 @@
 #ifndef USE_PATHS_ROSA
 #include "../multi_GPU_MPI/DATABASES_FOR_SOLVER/values_from_mesher_C.h"
 #else
-#include "./DB/values_from_mesher_C.h"
+#include "../DB/values_from_mesher_C.h"
 #endif
 
 // constant value of the time step in the main time loop
@@ -467,9 +467,9 @@ main (int argc, char *argv[])
     {
 #else
 #if defined(CONFIG_VERBOSE)
-  printf ("reading file ./DB/proc000000_reg1_database.dat\n");
+  printf ("reading file ../DB/proc000000_reg1_database.dat\n");
 #endif
-  if ((IIN = fopen ("./DB/proc000000_reg1_database.dat", "r")) == NULL) {
+  if ((IIN = fopen ("../DB/proc000000_reg1_database.dat", "r")) == NULL) {
 #endif
       fprintf (stderr, "Cannot open file ../multi_GPU_MPI/DATABASES_FOR_SOLVER/proc000000_reg1_database.dat, exiting...\n");
       exit (1);
@@ -520,9 +520,9 @@ main (int argc, char *argv[])
   if ((IIN = fopen ("../multi_GPU_MPI/DATABASES_FOR_SOLVER/matrices.dat", "r")) == NULL) {
 #else
 #if defined(CONFIG_VERBOSE)
-  printf ("reading file ./DB/matrices.dat\n");
+  printf ("reading file ../DB/matrices.dat\n");
 #endif
-  if ((IIN = fopen ("./DB/matrices.dat", "r")) == NULL)
+  if ((IIN = fopen ("../DB/matrices.dat", "r")) == NULL)
     {
 #endif
       fprintf (stderr,
