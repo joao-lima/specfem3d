@@ -8,7 +8,7 @@
 #include <omp.h>
 #endif
 
-#include "./DB/values_from_mesher_C.h"
+#include "../DB/values_from_mesher_C.h"
 
 // constant value of the time step in the main time loop
 #define deltatover2 0.5f*deltat
