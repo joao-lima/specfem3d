@@ -633,7 +633,7 @@ int main(){
     timer_end(8);
 
     timer_begin(9);
-#pragma omp parallel for private(k,j,i,aux,aux2) collapse(3)
+#pragma omp parallel for private(k,j,i,aux,aux2,iglob) collapse(3)
      for (k=0;k<NGLLZ;k++) {
        for (j=0;j<NGLLY;j++) {
           for (i=0;i<NGLLX;i++) {
