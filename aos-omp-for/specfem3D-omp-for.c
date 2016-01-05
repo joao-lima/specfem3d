@@ -638,7 +638,7 @@ int main(){
  #if defined(CONFIG_BENCHMARK)
  #if defined(_OPENMP)
    /* threads NSPEC NGLOB time */
-   fprintf(stdout, "specfem3d;omp;%d;%d;%d;%d;%d;%d;%f;%.6f\n", omp_get_max_threads(), NSPEC, NGLOB, BS_NSPEC, BS_NGLOB, NSTEP, deltat,
+   fprintf(stdout, "specfem3d;omp;%d;%d;%d;%d;%d;%d;%f;%.6f\n", omp_get_max_threads(), NSPEC, NGLOB, 0, 0, NSTEP, deltat,
    	 (float) (t_end - t_start) / 1000000.f);
  #else /* _OPENMP */
    fprintf(stdout, "specfem3d;serial;%d;%d;%d;%d;%d;%d;%f;%.6f\n", 1, NSPEC, NGLOB, 1, 1, NSTEP, deltat,
@@ -650,7 +650,7 @@ int main(){
 
  // save the seismogram at the end of the run
   char filename[50];
-  sprintf (filename, "seismogram_aos_serial_%d.txt", getpid ());
+  sprintf (filename, "seismogram_aos_omp_for_%d.txt", getpid ());
  if((IIN = fopen(filename,"w")) == NULL) {
          fprintf(stderr,"Cannot create file %s, exiting...\n", filename);
           exit(1);
