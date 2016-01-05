@@ -46,6 +46,19 @@
 long t_start, t_end;
 static long usecs ();
 
+static long _t1, _t2;
+static inline timer_begin(void)
+{
+	_t1 = usecs();
+}
+
+static inline timer_end(const char *str)
+{
+	_t2 = usecs();
+	fprintf(stdout, "TIMER %s %.6f\n", str, (float) (_t2 - _t1) / 1000000.f);
+	fflush(stdout);
+}
+
 int main(){
 
   static struct u_tag {
@@ -340,6 +353,7 @@ int main(){
         exit(1);
       }
     }
+    timer_begin();
     for (i=0;i<NGLOB;i++) {
       var[i].displx += deltat*var[i].velocx + deltatsqover2*var[i].accelx;
       var[i].disply += deltat*var[i].velocy + deltatsqover2*var[i].accely;
@@ -353,6 +367,7 @@ int main(){
       var[i].accely = 0.f;
       var[i].accelz = 0.f;
     }
+    timer_end("loop1");
 
 
     for (ispec=0;ispec<NSPEC;ispec++) {
