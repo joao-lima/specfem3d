@@ -669,6 +669,7 @@ int main(){
 
   } // end of the serial time loop
    t_end = usecs ();
+  report(12);
 
  #if defined(CONFIG_BENCHMARK)
  #if defined(_OPENMP)
