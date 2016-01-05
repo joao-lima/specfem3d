@@ -439,7 +439,7 @@ int main(){
           }
         }
 
-    for (i=0;k<NGLLZ*NGLLY*NGLLX;k++) {
+    for (i=0; i < NGLLZ*NGLLY*NGLLX; i++) {
        // compute derivatives of ux, uy and uz with respect to x, y and z
               xixl = tag_nspec[ispec][i].xix;
               xiyl = tag_nspec[ispec][i].xiy;
