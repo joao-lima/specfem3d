@@ -46,18 +46,37 @@
 long t_start, t_end;
 static long usecs ();
 
+static long _counters[64];
 static long _t1, _t2;
-static inline timer_begin(void)
+
+static inline void timer_init(void)
+{
+	int i;
+	for(i= 0; i < 64; i++)
+		_counters[i]= 0;
+}
+
+static inline void timer_begin(int i)
 {
 	_t1 = usecs();
 }
 
-static inline timer_end(const char *str)
+static inline void timer_end(int i)
 {
 	_t2 = usecs();
-	fprintf(stdout, "TIMER %s %.6f\n", str, (float) (_t2 - _t1) / 1000000.f);
-	fflush(stdout);
+	_counters[i] += (_t2 - _t1);
 }
+
+static inline void report(int n)
+{
+	int i;
+	for(i= 0; i < n; i++)
+	{
+		fprintf(stdout, "TIMER%d %.6f\n", i, (float) _counters[i] / 1000000.f);
+		fflush(stdout);
+	}
+}
+
 
 int main(){
 
@@ -353,7 +372,7 @@ int main(){
         exit(1);
       }
     }
-    timer_begin();
+    timer_begin(0);
     for (i=0;i<NGLOB;i++) {
       var[i].displx += deltat*var[i].velocx + deltatsqover2*var[i].accelx;
       var[i].disply += deltat*var[i].velocy + deltatsqover2*var[i].accely;
@@ -367,19 +386,22 @@ int main(){
       var[i].accely = 0.f;
       var[i].accelz = 0.f;
     }
-    timer_end("loop1");
+    timer_end(0);
 
 
     for (ispec=0;ispec<NSPEC;ispec++) {
 
+    timer_begin(1);
       for (i=0; i < NGLLX * NGLLY * NGLLZ; i++){
           iglob = ibool[ispec][i];
           tag_u[i].dummyx_loc = var[iglob].displx;
           tag_u[i].dummyy_loc = var[iglob].displx;
           tag_u[i].dummyz_loc = var[iglob].displx;
       }
+    timer_end(1);
 
 
+    timer_begin(2);
       for (j=0;j<NGLL2;j++) {
         for (i=0;i<NGLLX;i++) {
           utemp[j*5+i].tempx1_2D_25_5 = tag_h[i].hprime_xx*tag_u[j*5 + 0].dummyx_loc_2D_25_5 +
@@ -401,7 +423,9 @@ int main(){
                                          tag_h[i+20].hprime_xx*tag_u[j*5+4].dummyz_loc_2D_25_5;
         }
       }
+    timer_end(2);
 
+    timer_begin(3);
       for (k=0;k<NGLLZ;k++) {
         for (j=0;j<NGLLX;j++) {
           for (i=0;i<NGLLX;i++) {
@@ -425,8 +449,10 @@ int main(){
           }
         }
       }
+    timer_end(3);
 
 
+    timer_begin(4);
         for (j=0;j<NGLLX;j++) {
           for (i=0;i<NGLL2;i++) {
             utemp3[j*25+i].tempx3_2D_5_25 = tag_u[i].dummyx_loc_2D_5_25*tag_h[j*5 + 0].hprime_xxT +
@@ -448,7 +474,9 @@ int main(){
                                            tag_u[100+i].dummyz_loc_2D_5_25*tag_h[j*5+4].hprime_xxT;
           }
         }
+    timer_end(4);
 
+    timer_begin(5);
     for (i=0; i < NGLLZ*NGLLY*NGLLX; i++) {
        // compute derivatives of ux, uy and uz with respect to x, y and z
               xixl = tag_nspec[ispec][i].xix;
@@ -512,7 +540,9 @@ int main(){
           utemp3[i].tempz3 = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl);
 
       }
+    timer_end(5);
 
+    timer_begin(6);
       for (j=0;j<NGLL2;j++) {
         for (i=0;i<NGLLX;i++) {
           tag_new[j*5+i].newtempx1_2D_25_5 = tag_h[i].hprimewgll_xxT*utemp[j*5].tempx1_2D_25_5 +
@@ -534,9 +564,11 @@ int main(){
                                                tag_h[i+20].hprimewgll_xxT*utemp[j*5+4].tempz1_2D_25_5;
         }
       }
+    timer_end(6);
 
 //estou aqui
 
+    timer_begin(7);
       for (k=0;k<NGLLZ;k++) {
         for (j=0;j<NGLLX;j++) {
           for (i=0;i<NGLLX;i++) {
@@ -561,7 +593,9 @@ int main(){
           }
         }
       }
+    timer_end(7);
 
+    timer_begin(8);
         for (j=0;j<NGLLX;j++) {
           for (i=0;i<NGLL2;i++) {
             aux = j*25+i;
@@ -584,7 +618,9 @@ int main(){
                                                  utemp3[i+100].tempz3_2D_5_25*tag_h[j*25+4].hprimewgll_xx;
           }
         }
+    timer_end(8);
 
+    timer_begin(9);
      for (k=0;k<NGLLZ;k++) {
        for (j=0;j<NGLLY;j++) {
           for (i=0;i<NGLLX;i++) {
@@ -598,15 +634,18 @@ int main(){
             }
           }
         }
+    timer_end(9);
  }  // end of main loop on all the elements
 
 // big loop over all the global points (not elements) in the mesh to update
 // the acceleration and velocity vectors
+    timer_begin(10);
  for (i=0;i<NGLOB;i++) {
    var[i].accelx *= rmass_inverse[i];
    var[i].accely *= rmass_inverse[i];
    var[i].accelz *= rmass_inverse[i];
  }
+    timer_end(10);
 
  // add the earthquake source at a given grid point
  // this is negligible and is intrinsically serial because it is done by only
@@ -616,11 +655,13 @@ int main(){
   time = (it-1)*deltat;
   var[ibool[NSPEC_SOURCE-1][31]].accelz += 1.e4f * (1.f - 2.f*a*(time-t0)*(time-t0)) * expf(-a*(time-t0)*(time-t0)) / rho;
 
+    timer_begin(11);
   for (i=0;i<NGLOB;i++) {
     var[i].velocx += deltatover2*var[i].accelx;
     var[i].velocy += deltatover2*var[i].accely;
     var[i].velocz += deltatover2*var[i].accelz;
   }
+    timer_end(11);
 
  // record a seismogram to check that the simulation went well
  // we subtract one to the element number of the receiver because arrays start at 0 in C
