@@ -254,12 +254,7 @@ int main(){
          }
   #endif
 
-
-       // compute the transpose matrices
-       fscanf(IIN, "%e\n", &tag_h[i].hprime_xx);
-       fscanf(IIN, "%e\n", &tag_h[i].hprimewgll_xx);
    for (i=0; i < NGLLY * NGLLX; i++){
-
        //parte chata de conversão de matriz ij para ji
        pos_mat = i/5;
        if (i % 5 != 0){
@@ -268,13 +263,13 @@ int main(){
        }
        else
          auxmat = 1;
+       fscanf(IIN, "%e\n", &tag_h[i].hprime_xx);
+       fscanf(IIN, "%e\n", &tag_h[i].hprimewgll_xx);
+       // compute the transpose matrices
        tag_h[pos_mat].hprime_xxT = tag_h[i].hprime_xx;
        tag_h[pos_mat].hprimewgll_xxT = tag_h[i].hprimewgll_xx;
-
        fscanf(IIN, "%e\n", &tag_h[i].wgllwgll_yz);
-
        fscanf(IIN, "%e\n", &tag_h[i].wgllwgll_xz);
-
        fscanf(IIN, "%e\n", &tag_h[i].wgllwgll_xy);
   }
    fclose(IIN);
