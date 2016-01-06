@@ -489,7 +489,7 @@ int main(int argc, char *argv[])
 // and then to compute the elemental contribution
 // to the acceleration vector of each element of the finite-element mesh
  for (ispec=0;ispec<NSPEC;ispec++) {
-#pragma omp parallel for private(k,j,i) firstprivate(ispec) collapse(3) if(0)
+//#pragma omp parallel for private(k,j,i) firstprivate(ispec) collapse(3) if(0)
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
@@ -510,7 +510,7 @@ int main(int argc, char *argv[])
 // pages 386 and 389 and Figure 8.3.1
 
 
-#pragma omp parallel for private(j,i) collapse(2) if(0)
+//#pragma omp parallel for private(j,i) collapse(2) if(0)
   for (j=0;j<NGLL2;j++) {
     for (i=0;i<NGLLX;i++) {
       utempx1.tempx1_2D_25_5[j][i] = hprime_xx[0][i]*ux.dummyx_loc_2D_25_5[j][0] +
@@ -535,7 +535,7 @@ int main(int argc, char *argv[])
 
 
 
-#pragma omp parallel for private(k,j,i) collapse(3) if(0)
+//#pragma omp parallel for private(k,j,i) collapse(3) if(0)
   for (k=0;k<NGLLZ;k++) {
     for (j=0;j<NGLLX;j++) {
       for (i=0;i<NGLLX;i++) {
@@ -568,7 +568,7 @@ int main(int argc, char *argv[])
   }
   */
 
-#pragma omp parallel for private(j,i) collapse(2) if(0)
+//#pragma omp parallel for private(j,i) collapse(2) if(0)
   for (j=0;j<NGLLX;j++) {
     for (i=0;i<NGLL2;i++) {
       utempx3.tempx3_2D_5_25[j][i] = ux.dummyx_loc_2D_5_25[0][i]*hprime_xxT[j][0] +
@@ -591,7 +591,7 @@ int main(int argc, char *argv[])
     }
   }
    
-#pragma omp parallel for private(k,j,i) firstprivate(ispec) collapse(3) if(0)
+//#pragma omp parallel for private(k,j,i) firstprivate(ispec) collapse(3) if(0)
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
@@ -667,7 +667,7 @@ int main(int argc, char *argv[])
        }
      }
 
-#pragma omp parallel for private(j,i) collapse(2) if(0)
+//#pragma omp parallel for private(j,i) collapse(2) if(0)
   for (j=0;j<NGLL2;j++) {
     for (i=0;i<NGLLX;i++) {
       unewtempx1.newtempx1_2D_25_5[j][i] = hprimewgll_xxT[0][i]*utempx1.tempx1_2D_25_5[j][0] +
@@ -690,7 +690,7 @@ int main(int argc, char *argv[])
     }
   }
 
-#pragma omp parallel for private(k,j,i) collapse(3) if(0)
+//#pragma omp parallel for private(k,j,i) collapse(3) if(0)
   for (k=0;k<NGLLZ;k++) {
     for (j=0;j<NGLLX;j++) {
       for (i=0;i<NGLLX;i++) {
@@ -715,7 +715,7 @@ int main(int argc, char *argv[])
     }
   }
 
-#pragma omp parallel for private(j,i) collapse(2) if(0)
+//#pragma omp parallel for private(j,i) collapse(2) if(0)
   for (j=0;j<NGLLX;j++) {
     for (i=0;i<NGLL2;i++) {
       unewtempx3.newtempx3_2D_5_25[j][i] = utempx3.tempx3_2D_5_25[0][i]*hprimewgll_xx[j][0] +
@@ -738,7 +738,7 @@ int main(int argc, char *argv[])
     }
   }
 
-#pragma omp parallel for private(k,j,i,iglob) firstprivate(ispec) collapse(3) if(0)
+//#pragma omp parallel for private(k,j,i,iglob) firstprivate(ispec) collapse(3) if(0)
    for (k=0;k<NGLLZ;k++) {
      for (j=0;j<NGLLY;j++) {
        for (i=0;i<NGLLX;i++) {
